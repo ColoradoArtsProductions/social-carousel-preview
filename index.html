@@ -32,7 +32,10 @@
         .carousel { 
             display: flex; 
             overflow-x: auto; 
-            snap-type: x mandatory; 
+            /* This forces the snap behavior */
+            scroll-snap-type: x mandatory; 
+            /* Smooths out the movement */
+            scroll-behavior: smooth;
             width: 100%; 
             height: 100%; 
             scrollbar-width: none; 
@@ -42,7 +45,10 @@
         .slide { 
             flex: 0 0 100%; 
             width: 100%; 
-            snap-align: start; 
+            /* This tells the slide to stick to the start of the container */
+            scroll-snap-align: start; 
+            /* Prevents any weird overlapping */
+            scroll-snap-stop: always; 
             position: relative; 
         }
     
@@ -53,10 +59,11 @@
             left: 0;
             width: 100%;
             height: 100%;
-            pointer-events: none; /* Let clicks pass through to the video */
-            background: url('https://i.imgur.com/8Yv6Z6X.png'); /* Replace with a PNG of IG UI if you have one */
-            border: 2px dashed rgba(255,255,255,0.3); /* Visual safe zone guide */
-            display: block;
+            pointer-events: none; /* Crucial: lets you still click 'Play' on the video */
+            z-index: 10;
+            /* This adds a gradient at the bottom so the white text is readable */
+            background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 30%);
+            border: 2px dashed rgba(255,255,255,0.3); /* Shows the 'Safe Zone' */
         }
     
         .controls { margin-bottom: 15px; text-align: center; }
@@ -71,20 +78,33 @@
 
     <div class="phone-wrapper">
         <div id="ui-overlay" class="overlay" style="display:none;">
-            <div style="position:absolute; bottom:100px; left:20px; color:white; font-size:12px;">
-                <strong>@yourbrand</strong><br>Check out our new summer reel... #design
+            <img src="https://i.imgur.com/8pA0pS6.png" style="width:100%; height:100%; object-fit:contain; opacity:0.9;">
+            
+            <div style="position:absolute; bottom:60px; left:15px; color:white; font-size:13px; text-shadow: 1px 1px 2px black;">
+                <strong>@coloradoartsproductions</strong><br>
+                Draft 1: Social Carousel Concept<br>
+                <span style="color:#aaa;">#production #bts #socialmedia</span>
             </div>
         </div>
 
         <div class="carousel">
             <div class="slide">
-                <iframe src="https://player.vimeo.com/video/1173046514?h=24436ec4c2&badge=0&autopause=0" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
+                <iframe src="https://player.vimeo.com/video/1173046514?h=24436ec4c2&badge=0&autopause=0" frameborder="0" allow="autoplay; fullscreen" allowfullscreen
+                    width="100%" height="100%" frameborder="0" 
+                    allow="autoplay; fullscreen; picture-in-picture" allowfullscreen>
+                </iframe>
             </div>
             <div class="slide">
-                <iframe src="https://player.vimeo.com/video/1173046547?h=9b36540f2a&badge=0&autopause=0" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
+                <iframe src="https://player.vimeo.com/video/1173046547?h=9b36540f2a&badge=0&autopause=0" frameborder="0" allow="autoplay; fullscreen" allowfullscreen
+                    width="100%" height="100%" frameborder="0" 
+                    allow="autoplay; fullscreen; picture-in-picture" allowfullscreen>
+                </iframe>
             </div>
             <div class="slide">
-                <iframe src="https://player.vimeo.com/video/1173046561?h=62bdab01e8&badge=0&autopause=0" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
+                <iframe src="https://player.vimeo.com/video/1173046561?h=62bdab01e8&badge=0&autopause=0" frameborder="0" allow="autoplay; fullscreen" allowfullscreen
+                    width="100%" height="100%" frameborder="0"
+                    allow="autoplay; fullscreen; picture-in-picture" allowfullscreen>
+                </iframe>
             </div>
         </div>
     </div>
