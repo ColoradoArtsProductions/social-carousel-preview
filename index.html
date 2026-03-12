@@ -112,33 +112,68 @@
 
     <script src="https://player.vimeo.com/api/player.js"></script>
     
+    <script src="https://player.vimeo.com/api/player.js"></script>
+    
     <script>
-        // 2. Audio Toggle Logic
+        // 2. Setup Players and State
         const iframes = document.querySelectorAll('iframe');
         const players = Array.from(iframes).map(iframe => new Vimeo.Player(iframe));
+        const slides = document.querySelectorAll('.slide');
+        
         let isAudioOn = false;
+        let currentPlayerIndex = 0; // Tracks which video is on screen
 
+        // 3. The Audio Toggle Button Logic
         function toggleAudio() {
             isAudioOn = !isAudioOn;
             const btn = document.getElementById('audio-btn');
             
-            // Turn volume up to 1 (100%) or down to 0
-            players.forEach(player => {
-                player.setVolume(isAudioOn ? 1 : 0);
+            // Only unmute the currently visible player
+            players.forEach((player, index) => {
+                if (index === currentPlayerIndex && isAudioOn) {
+                    player.setVolume(1);
+                } else {
+                    player.setVolume(0);
+                }
             });
             
-            // Update the button text
+            // Update the button text and color
             btn.innerHTML = isAudioOn ? "Mute Audio 🔇" : "Enable Audio 🔊";
-            btn.style.background = isAudioOn ? "#dc3545" : "#007bff"; // Changes color to red when audio is on
+            btn.style.background = isAudioOn ? "#dc3545" : "#007bff"; 
         }
 
-        // Overlay Toggle Logic
+        // 4. The "Sensor" to detect which slide is currently visible
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    // Find out which slide just snapped into view
+                    currentPlayerIndex = Array.from(slides).indexOf(entry.target);
+                    
+                    // Adjust volumes dynamically based on what is visible
+                    players.forEach((player, index) => {
+                        if (index === currentPlayerIndex && isAudioOn) {
+                            player.setVolume(1);
+                        } else {
+                            player.setVolume(0);
+                        }
+                    });
+                }
+            });
+        }, {
+            root: document.getElementById('slider'),
+            threshold: 0.6 // Triggers when the video is 60% visible on screen
+        });
+
+        // Attach the sensor to all our slides
+        slides.forEach(slide => observer.observe(slide));
+
+        // 5. Overlay Toggle Logic
         function toggleOverlay() {
             var x = document.getElementById("ui-overlay");
             x.style.display = (x.style.display === "none") ? "flex" : "none";
         }
 
-        // Click and Drag Swipe Logic
+        // 6. Click and Drag Swipe Logic for Desktop
         const slider = document.getElementById('slider');
         let isDown = false;
         let startX;
