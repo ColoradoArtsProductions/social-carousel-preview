@@ -115,20 +115,18 @@
     <script src="https://player.vimeo.com/api/player.js"></script>
     
     <script>
-        // 2. Setup Players and State
         const iframes = document.querySelectorAll('iframe');
         const players = Array.from(iframes).map(iframe => new Vimeo.Player(iframe));
         const slides = document.querySelectorAll('.slide');
         
         let isAudioOn = false;
-        let currentPlayerIndex = 0; // Tracks which video is on screen
+        let currentPlayerIndex = 0; 
 
-        // 3. The Audio Toggle Button Logic
+        // The Audio Toggle Button Logic
         function toggleAudio() {
             isAudioOn = !isAudioOn;
             const btn = document.getElementById('audio-btn');
             
-            // Only unmute the currently visible player
             players.forEach((player, index) => {
                 if (index === currentPlayerIndex && isAudioOn) {
                     player.setVolume(1);
@@ -137,43 +135,49 @@
                 }
             });
             
-            // Update the button text and color
             btn.innerHTML = isAudioOn ? "Mute Audio 🔇" : "Enable Audio 🔊";
             btn.style.background = isAudioOn ? "#dc3545" : "#007bff"; 
         }
 
-        // 4. The "Sensor" to detect which slide is currently visible
+        // The "Sensor" to handle Audio AND Playback
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
+                // Find out which slide the sensor is looking at
+                const index = Array.from(slides).indexOf(entry.target);
+                const player = players[index];
+
                 if (entry.isIntersecting) {
-                    // Find out which slide just snapped into view
-                    currentPlayerIndex = Array.from(slides).indexOf(entry.target);
+                    // VIDEO IS IN VIEW: Update index, rewind to start, and play
+                    currentPlayerIndex = index;
                     
-                    // Adjust volumes dynamically based on what is visible
-                    players.forEach((player, index) => {
-                        if (index === currentPlayerIndex && isAudioOn) {
-                            player.setVolume(1);
-                        } else {
-                            player.setVolume(0);
-                        }
+                    player.setCurrentTime(0).then(() => {
+                        player.play();
                     });
+                    
+                    if (isAudioOn) {
+                        player.setVolume(1);
+                    }
+                } else {
+                    // VIDEO IS OUT OF VIEW: Pause it and mute it
+                    player.pause();
+                    player.setVolume(0);
                 }
             });
         }, {
             root: document.getElementById('slider'),
-            threshold: 0.6 // Triggers when the video is 60% visible on screen
+            threshold: 0.6 
         });
 
         // Attach the sensor to all our slides
         slides.forEach(slide => observer.observe(slide));
 
-        // 5. Overlay Toggle Logic
+        // Overlay Toggle Logic
         function toggleOverlay() {
             var x = document.getElementById("ui-overlay");
             x.style.display = (x.style.display === "none") ? "flex" : "none";
         }
 
-        // 6. Click and Drag Swipe Logic for Desktop
+        // Click and Drag Swipe Logic for Desktop
         const slider = document.getElementById('slider');
         let isDown = false;
         let startX;
