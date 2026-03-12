@@ -112,8 +112,6 @@
 
     <script src="https://player.vimeo.com/api/player.js"></script>
     
-    <script src="https://player.vimeo.com/api/player.js"></script>
-    
     <script>
         const iframes = document.querySelectorAll('iframe');
         const players = Array.from(iframes).map(iframe => new Vimeo.Player(iframe));
@@ -142,21 +140,23 @@
         // The "Sensor" to handle Audio AND Playback
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
-                // Find out which slide the sensor is looking at
                 const index = Array.from(slides).indexOf(entry.target);
                 const player = players[index];
 
                 if (entry.isIntersecting) {
-                    // VIDEO IS IN VIEW: Update index, rewind to start, and play
                     currentPlayerIndex = index;
                     
-                    player.setCurrentTime(0).then(() => {
-                        player.play();
+                    // THE FIX: Tell it to play FIRST, then rewind it. 
+                    // This bypasses the Vimeo 'frozen frame' bug.
+                    player.play().then(() => {
+                        player.setCurrentTime(0);
+                        if (isAudioOn) {
+                            player.setVolume(1);
+                        }
+                    }).catch(error => {
+                        console.log("Autoplay prevented or interrupted:", error);
                     });
                     
-                    if (isAudioOn) {
-                        player.setVolume(1);
-                    }
                 } else {
                     // VIDEO IS OUT OF VIEW: Pause it and mute it
                     player.pause();
