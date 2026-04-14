@@ -36,11 +36,9 @@
             scrollbar-width: none; 
             cursor: grab; 
         }
+
         .carousel::-webkit-scrollbar { display: none; }
-        
-        .carousel:active {
-            cursor: grabbing; 
-        }
+        .carousel:active { cursor: grabbing; }
 
         .slide { 
             flex: 0 0 100%; 
@@ -79,10 +77,21 @@
         }
 
         .controls { margin-bottom: 15px; text-align: center; }
-        button { background: #333; color: white; border: 1px solid #555; padding: 8px 15px; border-radius: 5px; cursor: pointer; margin: 0 5px; }
-        
-        /* Highlighting the audio button */
-        #audio-btn { background: #007bff; border-color: #0056b3; font-weight: bold; }
+        button {
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 0 5px;
+        }
+
+        #audio-btn {
+            background: #007bff;
+            border-color: #0056b3;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -97,34 +106,48 @@
             <span class="overlay-text">UI OVERLAY AREA (AVOID TEXT HERE)</span>
         </div>
 
-        <div class="carousel" id="slider">
-            <div class="slide">
-                <iframe src="https://player.vimeo.com/video/1173046514?h=24436ec4c2&background=1" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
-            </div>
-            <div class="slide">
-                <iframe src="https://player.vimeo.com/video/1173046547?h=9b36540f2a&background=1" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
-            </div>
-            <div class="slide">
-                <iframe src="https://player.vimeo.com/video/1173046561?h=62bdab01e8&background=1" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
-            </div>
-        </div>
+        <div class="carousel" id="slider"></div>
     </div>
 
     <script src="https://player.vimeo.com/api/player.js"></script>
-    
-    <script>
-        const iframes = document.querySelectorAll('iframe');
-        const players = Array.from(iframes).map(iframe => new Vimeo.Player(iframe));
-        const slides = document.querySelectorAll('.slide');
-        
-        let isAudioOn = false;
-        let currentPlayerIndex = 0; 
 
-        // The Audio Toggle Button Logic
+    <script>
+        const carouselSets = {
+            "1": [
+                "https://player.vimeo.com/video/1173046514?h=24436ec4c2&background=1",
+                "https://player.vimeo.com/video/1173046547?h=9b36540f2a&background=1",
+                "https://player.vimeo.com/video/1173046561?h=62bdab01e8&background=1"
+            ],
+            "2": [
+                "https://player.vimeo.com/video/1183164857?h=9844906e18&background=1",
+                "https://player.vimeo.com/video/1183172215?h=da69d1aad4&background=1",
+                "https://player.vimeo.com/video/1183172080?h=3852270e21&background=1"
+            ]
+        };
+
+        const params = new URLSearchParams(window.location.search);
+        const selectedSet = params.get("set") || "1";
+        const videoList = carouselSets[selectedSet] || carouselSets["1"];
+
+        const slider = document.getElementById('slider');
+
+        slider.innerHTML = videoList.map(videoUrl => `
+            <div class="slide">
+                <iframe src="${videoUrl}" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
+            </div>
+        `).join('');
+
+        const iframes = document.querySelectorAll('iframe');
+        const slides = document.querySelectorAll('.slide');
+        const players = Array.from(iframes).map(iframe => new Vimeo.Player(iframe));
+
+        let isAudioOn = false;
+        let currentPlayerIndex = 0;
+
         function toggleAudio() {
             isAudioOn = !isAudioOn;
             const btn = document.getElementById('audio-btn');
-            
+
             players.forEach((player, index) => {
                 if (index === currentPlayerIndex && isAudioOn) {
                     player.setVolume(1);
@@ -132,22 +155,21 @@
                     player.setVolume(0);
                 }
             });
-            
+
             btn.innerHTML = isAudioOn ? "Mute Audio 🔇" : "Enable Audio 🔊";
-            btn.style.background = isAudioOn ? "#dc3545" : "#007bff"; 
+            btn.style.background = isAudioOn ? "#dc3545" : "#007bff";
         }
 
-        // The "Sensor" to handle Audio AND Playback
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 const index = Array.from(slides).indexOf(entry.target);
                 const player = players[index];
 
+                if (!player) return;
+
                 if (entry.isIntersecting) {
                     currentPlayerIndex = index;
-                    
-                    // THE FIX: Tell it to play FIRST, then rewind it. 
-                    // This bypasses the Vimeo 'frozen frame' bug.
+
                     player.play().then(() => {
                         player.setCurrentTime(0);
                         if (isAudioOn) {
@@ -156,29 +178,23 @@
                     }).catch(error => {
                         console.log("Autoplay prevented or interrupted:", error);
                     });
-                    
                 } else {
-                    // VIDEO IS OUT OF VIEW: Pause it and mute it
                     player.pause();
                     player.setVolume(0);
                 }
             });
         }, {
-            root: document.getElementById('slider'),
-            threshold: 0.6 
+            root: slider,
+            threshold: 0.6
         });
 
-        // Attach the sensor to all our slides
         slides.forEach(slide => observer.observe(slide));
 
-        // Overlay Toggle Logic
         function toggleOverlay() {
-            var x = document.getElementById("ui-overlay");
+            const x = document.getElementById("ui-overlay");
             x.style.display = (x.style.display === "none") ? "flex" : "none";
         }
 
-        // Click and Drag Swipe Logic for Desktop
-        const slider = document.getElementById('slider');
         let isDown = false;
         let startX;
         let scrollLeft;
@@ -188,13 +204,15 @@
             startX = e.pageX - slider.offsetLeft;
             scrollLeft = slider.scrollLeft;
         });
+
         slider.addEventListener('mouseleave', () => { isDown = false; });
         slider.addEventListener('mouseup', () => { isDown = false; });
+
         slider.addEventListener('mousemove', (e) => {
-            if(!isDown) return;
+            if (!isDown) return;
             e.preventDefault();
             const x = e.pageX - slider.offsetLeft;
-            const walk = (x - startX) * 1.5; 
+            const walk = (x - startX) * 1.5;
             slider.scrollLeft = scrollLeft - walk;
         });
     </script>
